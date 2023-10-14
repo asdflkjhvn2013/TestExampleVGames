@@ -2,12 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class InitalizeData : MonoBehaviour,IData
+public class InitalizeDataSystem : MonoBehaviour, IDataSystem
 {
-    private string filePath = Application.dataPath + "/Data/data.json";
-    
-    public bool CheckingData()
+    private string filePath;
+
+    public bool CheckingData(string _filePath)
     {
+        filePath = _filePath;
+
         if (!System.IO.File.Exists(filePath))
         {
             return false;
@@ -16,7 +18,7 @@ public class InitalizeData : MonoBehaviour,IData
         return true;
     }
 
-    public void InitialData()
+    public void InitialData(PlayerData playerData)
     {
         PlayerData defaultData = new PlayerData()
         {
@@ -27,7 +29,7 @@ public class InitalizeData : MonoBehaviour,IData
         };
 
         string jsonData = JsonUtility.ToJson(defaultData);
-        System.IO.File.WriteAllText(filePath,jsonData);
+        System.IO.File.WriteAllText(filePath, jsonData);
     }
 
     public PlayerData FetchData()
@@ -35,7 +37,7 @@ public class InitalizeData : MonoBehaviour,IData
         string jsonData = System.IO.File.ReadAllText(filePath);
 
         PlayerData playerData = JsonUtility.FromJson<PlayerData>(jsonData);
-        
+
         return playerData;
     }
 

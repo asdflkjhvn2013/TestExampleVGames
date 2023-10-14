@@ -3,26 +3,38 @@ using UnityEngine;
 
 public class GameplayManager : MonoBehaviour
 {
-    private IData dataSystem;
+    private IDataSystem dataSystemSystem;
     private ISpawner spawnerManager;
+    private IGUIManager guiManager;
 
     private PlayerData playerData;
+    
+    private string filePath = Application.dataPath + "/Data/data.json";
 
     private void Awake()
     {
-        dataSystem = GetComponentInChildren<IData>();
+        dataSystemSystem = GetComponentInChildren<IDataSystem>();
         spawnerManager = GetComponentInChildren<ISpawner>();
+        guiManager = GetComponentInChildren<IGUIManager>();
+        
+        guiManager.AssignEvent(onClickPlayGame);
     }
 
     private void Start()
     {
-        if (!dataSystem.CheckingData())
+        if (!dataSystemSystem.CheckingData(filePath))
         {
-          dataSystem.InitialData();
+         dataSystemSystem.InitialData(playerData);
         }
 
-        playerData = dataSystem.FetchData();
+        playerData = dataSystemSystem.FetchData();
         
-        Debug.Log($"level: {playerData.CurrentLevel} - Gold: {playerData.CurrentGold}");
     }
+    
+    private void onClickPlayGame()
+    {
+       spawnerManager.SpawnerAt(playerData.CurrentLevel);
+       Debug.Log("Spawned");
+    }
+
 }
