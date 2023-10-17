@@ -1,17 +1,19 @@
-[
-  {
-    "level": 1,
-    "pair" : 3,
-    "type" : [1,2,3]
-  },
-  {
-    "level": 2,
-    "pair" : 7,
-    "type" : [1,2,3,4,5,6,7]
-  },
-  {
-    "level": 3,
-    "pair" : 10,
-    "type" : [1,2,3,4,5,6,7,8,9,10]
-  }
-]
+{
+  "chapter": [
+    {
+      "level": 1,
+      "numOfSetsSpawn": 3,
+      "typesChessPieces": [1,2,3]
+    },
+    {
+      "level": 2,
+      "numOfSetsSpawn": 5,
+      "typesChessPieces": [1,2,3,4,5]
+    },
+    {
+      "level": 3,
+      "numOfSetsSpawn": 10,
+      "typesChessPieces": [1,2,3,4,5,6,7,8,9,10]
+    }
+  ]
+}

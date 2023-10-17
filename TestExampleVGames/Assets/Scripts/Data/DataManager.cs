@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class InitalizeDataSystem : MonoBehaviour, IDataSystem
+public class DataManager : MonoBehaviour, IDataSystem
 {
     private string filePath;
 
