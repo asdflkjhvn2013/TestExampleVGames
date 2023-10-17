@@ -1,19 +1,11 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
 
-public class GUIMainMenu : MonoBehaviour,IGUIManager
+
+public class GUIMainMenu : MonoBehaviour,IGuiItem
 {
     [SerializeField] private Button btnPlayGame;
-    private Action onPlayGame;
-
-    private void Start()
-    {
-        btnPlayGame.onClick.AddListener(onClickPlayGame);
-    }
 
     private void OnDestroy()
     {
@@ -22,12 +14,16 @@ public class GUIMainMenu : MonoBehaviour,IGUIManager
 
     private void onClickPlayGame()
     {
-        onPlayGame?.Invoke();
+        EventHandle.OnPlayGame.Invoke();
     }
 
-    public void AssignEvent(Action _onPlayGame)
+    public void Init()
     {
-        onPlayGame = _onPlayGame;
+        btnPlayGame.onClick.AddListener(onClickPlayGame);
     }
     
+    public void SetSelected(Vector3 _posSelection, int _idChess)
+    {
+        
+    }
 }

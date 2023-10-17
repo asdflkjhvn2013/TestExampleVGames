@@ -8,21 +8,27 @@ public class GUIManager : MonoBehaviour, IGUIManager
     [SerializeField] private GameObject mainMenuGameObject;
     [SerializeField] private GameObject gamePlayGameObject;
 
-    private IGUIManager mainMenu;
-    private IGUIManager gamePlay;
+    private IGuiItem mainMenu;
+    private IGuiItem gamePlay;
 
     private Action onClickPlayGame;
-
-    private void Awake()
-    {
-        mainMenu = mainMenuGameObject.GetComponent<IGUIManager>();
-        gamePlay = gamePlayGameObject.GetComponent<IGUIManager>();
-    }
-
+    
     public void AssignEvent(Action _onPlayGame)
     {
         onClickPlayGame = _onPlayGame;
-        mainMenu.AssignEvent(onPlayGame);
+        
+        mainMenu = mainMenuGameObject.GetComponent<IGuiItem>();
+        gamePlay = gamePlayGameObject.GetComponent<IGuiItem>();
+        
+        mainMenu.Init();
+        gamePlay.Init();
+        
+        EventHandle.OnPlayGame += onPlayGame;
+    }
+
+    public void SetSelected(Vector3 _posSelection, int _idChess)
+    {
+        gamePlay.SetSelected(_posSelection, _idChess);
     }
 
     private void onPlayGame()
@@ -30,5 +36,10 @@ public class GUIManager : MonoBehaviour, IGUIManager
         mainMenuGameObject.SetActive(false);
         gamePlayGameObject.SetActive(true);
         onClickPlayGame?.Invoke();
+    }
+
+    private void OnDestroy()
+    {
+        EventHandle.OnPlayGame -= onPlayGame;
     }
 }
