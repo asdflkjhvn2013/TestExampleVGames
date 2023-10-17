@@ -1,48 +1,95 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
+using UnityEngine.TextCore;
 
-public class DataManager : MonoBehaviour, IDataSystem
+public class DataManager : MonoBehaviour
 {
-    private string filePath;
+    private static DataManager intance;
 
-    public bool CheckingData(string _filePath)
+    public static DataManager INTANCE
     {
-        filePath = _filePath;
+        get => intance;
+    }
 
-        if (!System.IO.File.Exists(filePath))
+    [SerializeField] private List<string> listFileDataNames;
+
+    [SerializeField] private PlayerData playerData;
+    [SerializeField] private ChapterData chapterData;
+
+    private void Awake()
+    {
+        if (intance == null)
         {
-            return false;
+            intance = this;
+            DontDestroyOnLoad(this.gameObject);
         }
-
-        return true;
-    }
-
-    public void InitialData(PlayerData playerData)
-    {
-        PlayerData defaultData = new PlayerData()
+        else
         {
-            CurrentLevel = 1,
-            CurrentGold = 0,
-            HighScore = 0,
-            IsSoundOn = true
-        };
-
-        string jsonData = JsonUtility.ToJson(defaultData);
-        System.IO.File.WriteAllText(filePath, jsonData);
+            Destroy(gameObject);
+        }
     }
 
-    public PlayerData FetchData()
+    public void LoadData()
     {
-        string jsonData = System.IO.File.ReadAllText(filePath);
+        for (int i = 0; i < listFileDataNames.Count; i++)
+        {
+            var filePath = Application.dataPath + "/Data/" + listFileDataNames[i] + ".json";
+            if (filePath.Contains(FileDataName.PLAYERDATA))
+            {
+                loadPlayerData(filePath);
+            }
+            else if (filePath.Contains(FileDataName.LEVELDATA))
+            {
+                loadLevelData(filePath);
+            }
+        }
+    }
 
-        PlayerData playerData = JsonUtility.FromJson<PlayerData>(jsonData);
-
+    public PlayerData GetPlayerData()
+    {
         return playerData;
     }
 
-    public void OverrideData(PlayerData _playerData)
+    public ChapterData GetChapterData()
     {
-        throw new System.NotImplementedException();
+        return chapterData;
     }
+    
+    private void loadPlayerData(string _filePath)
+    {
+         string jsonData = "";
+        if (!File.Exists(_filePath))
+        {
+            PlayerData defaultData = new PlayerData()
+            {
+                CurrentLevel = 1,
+                CurrentGold = 0,
+                HighScore = 0,
+                IsSoundOn = true
+            };
+
+            jsonData = JsonUtility.ToJson(defaultData);
+            File.WriteAllText(_filePath, jsonData);
+        }
+
+        jsonData = File.ReadAllText(_filePath);
+        playerData = JsonUtility.FromJson<PlayerData>(jsonData);
+    }
+
+    private void loadLevelData(string _filePath)
+    {
+        chapterData = new ChapterData();
+
+        var jsonData = File.ReadAllText(_filePath);
+
+        chapterData = JsonUtility.FromJson<ChapterData>(jsonData);
+    }
+}
+
+public class FileDataName
+{
+    public const string PLAYERDATA = "playerdata";
+    public const string LEVELDATA = "level";
 }

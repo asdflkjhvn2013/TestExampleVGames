@@ -13,7 +13,13 @@ public class PlayerData
 [Serializable]
 public class LevelData
 {
-    public int Level;
-    public int NumOfMatch;
-    public List<int> TypeOfBlock;
-} 
+    public int level;
+    public int numOfSetsSpawn;
+    public int[] typesChessPieces;
+}
+
+[Serializable]
+public class ChapterData
+{
+    public LevelData[] chapter;
+}
