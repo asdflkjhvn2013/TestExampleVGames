@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public interface IDataSystem
@@ -13,19 +14,22 @@ public interface ISpawner
 {
     void AssignData(ChapterData _chapterData);
     void SpawnerAt(int _level);
+    List<GameObject> GetListChess();
     void ReSpawn();
 }
 
 public interface IGUIManager
 {
-    void AssignEvent(Action _onPlayGame);
+    void AssignEvent(Action _onPlayGame,PlayerData _playerData);
     void SetSelected(Vector3 _posSelection, int _idChess);
+    void OpenUIThanks();
 }
 
 public interface IGuiItem
 {
-    void Init();
+    void Init(int _level);
     void SetSelected(Vector3 _posSelection, int _idChess);
+    void OnWinGame(int _levelNext);
 }
 
 public interface IActionHandle

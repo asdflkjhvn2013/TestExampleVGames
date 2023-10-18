@@ -15,12 +15,16 @@ public class GameplayManager : MonoBehaviour
     private OutlineManager outlineManager;
 
     private RaycastHit hit;
-   [SerializeField] private List<int> chessHasSelected;
+    [SerializeField] private List<int> chessHasSelected;
     private bool isHasMatch;
     private int idMatch;
+    private int score;
+    private int numOfSlot = 8;
 
     private void Start()
     {
+        chessHasSelected = new List<int>();
+
         spawnerManager = GetComponentInChildren<ISpawner>();
         guiManager = GetComponentInChildren<IGUIManager>();
         inputManager = GetComponentInChildren<IActionHandle>();
@@ -28,13 +32,26 @@ public class GameplayManager : MonoBehaviour
 
         DataManager.INTANCE.LoadData();
         inputManager.Initialize();
-        chessHasSelected = new List<int>();
+
         EventHandle.OnCheckMatchDone += onCheckMatchDone;
+        EventHandle.OnNextLevel += onClickPlayGame;
+        EventHandle.OnMainMenu += onMainMenu;
+
 
         spawnerManager.AssignData(DataManager.INTANCE.GetChapterData());
-        guiManager.AssignEvent(onClickPlayGame);
+        guiManager.AssignEvent(onClickPlayGame, DataManager.INTANCE.GetPlayerData());
         inputManager.AssignEvent(onMouseDown, onMouseUp);
         Timing.RunCoroutine(updateGameplay());
+    }
+
+    private void onMainMenu()
+    {
+        if (chessHasSelected.Count > 0)
+        {
+            chessHasSelected.Clear();
+        }
+
+        score = 0;
     }
 
     private void onCheckMatchDone()
@@ -54,7 +71,7 @@ public class GameplayManager : MonoBehaviour
     {
         while (true)
         {
-            checkMathChess();   
+            checkMathChess();
             yield return Timing.WaitForOneFrame;
         }
     }
@@ -87,7 +104,17 @@ public class GameplayManager : MonoBehaviour
 
     private void onClickPlayGame()
     {
-        spawnerManager.SpawnerAt(DataManager.INTANCE.GetPlayerData().CurrentLevel);
+        PlayerData playerData = DataManager.INTANCE.GetPlayerData();
+        if (playerData.CurrentLevel <= 3)
+        {
+            spawnerManager.SpawnerAt(playerData.CurrentLevel);
+            var leveldata = DataManager.INTANCE.GetLevelData(playerData.CurrentLevel);
+            EventHandle.OnStarCountTimer.Invoke(leveldata.timePlayLevel);
+        }
+        else
+        {
+            guiManager.OpenUIThanks();
+        }
     }
 
     private bool CheckOutlineAvailable(Vector2 _pos)
@@ -117,15 +144,55 @@ public class GameplayManager : MonoBehaviour
             {
                 if (group.Count() >= 3)
                 {
+                    var levelData = DataManager.INTANCE.GetLevelData(DataManager.INTANCE.GetPlayerData().CurrentLevel);
+                    score += levelData.scorePerMatch;
+
                     idMatch = group.Key;
-                    EventHandle.OnCheckMatchStart.Invoke(group.Key);
+
+                    EventHandle.OnCheckMatchStart.Invoke(group.Key, score);
+                }
+                else
+                {
+                    isHasMatch = false;
                 }
             }
+
+            checkWinLevel();
+        }
+    }
+
+    private void checkWinLevel()
+    {
+        if (chessHasSelected.Count < numOfSlot)
+        {
+            var listChessSpawn = spawnerManager.GetListChess();
+            if (listChessSpawn.All(chess => !chess.activeSelf))
+            {
+                var playerData = DataManager.INTANCE.GetPlayerData();
+                PlayerData _newPlayerData = new PlayerData()
+                {
+                    CurrentLevel = playerData.CurrentLevel + 1,
+                    CurrentGold = 0,
+                    HighScore = score > playerData.HighScore ? score : playerData.HighScore,
+                    IsSoundOn = playerData.IsSoundOn
+                };
+
+                DataManager.INTANCE.SetPlayerData(_newPlayerData);
+
+                EventHandle.OnWinGame.Invoke(_newPlayerData.CurrentLevel);
+                score = 0;
+            }
+        }
+        else
+        {
+            EventHandle.OnTimeOut.Invoke();
         }
     }
 
     private void OnDestroy()
     {
         EventHandle.OnCheckMatchDone -= onCheckMatchDone;
+        EventHandle.OnNextLevel -= onClickPlayGame;
+        EventHandle.OnMainMenu -= onMainMenu;
     }
 }
