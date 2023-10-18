@@ -24,7 +24,10 @@ public class GUIChessSelectedItem : MonoBehaviour
     public void MoveToSlot(Vector3 _pos, Action _callback = null)
     {
         var rect = GetComponent<RectTransform>();
-        rect.DOAnchorPos(_pos, duration).OnComplete(_callback.Invoke);
+        rect.DOAnchorPos(_pos, duration).OnComplete(() =>
+        {
+            _callback?.Invoke();
+        });
     }
 
     public int GetIdChess()
@@ -42,5 +45,10 @@ public class GUIChessSelectedItem : MonoBehaviour
         {
             transform.DOScale(scale - 0.3f, duration);
         });
+    }
+
+    public void SetIndexSlot(int _index)
+    {
+        indexSlot = _index;
     }
 }
