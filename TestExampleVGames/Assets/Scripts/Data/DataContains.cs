@@ -16,6 +16,8 @@ public class LevelData
     public int level;
     public int numOfSetsSpawn;
     public int[] typesChessPieces;
+    public int scorePerMatch;
+    public int timePlayLevel;
 }
 
 [Serializable]

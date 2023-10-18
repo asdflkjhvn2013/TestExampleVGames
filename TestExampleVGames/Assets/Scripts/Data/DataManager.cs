@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System.Linq;
 using UnityEngine.TextCore;
 
 public class DataManager : MonoBehaviour
@@ -49,6 +50,15 @@ public class DataManager : MonoBehaviour
 
     public PlayerData GetPlayerData()
     {
+        for (int i = 0; i < listFileDataNames.Count; i++)
+        {
+            var filePath = Application.dataPath + "/Data/" + listFileDataNames[i] + ".json";
+            if (filePath.Contains(FileDataName.PLAYERDATA))
+            {
+                loadPlayerData(filePath);
+            }
+        }
+
         return playerData;
     }
 
@@ -56,10 +66,45 @@ public class DataManager : MonoBehaviour
     {
         return chapterData;
     }
-    
+
+    public void SetPlayerData(PlayerData _newPlayerData)
+    {
+        for (int i = 0; i < listFileDataNames.Count; i++)
+        {
+            var filePath = Application.dataPath + "/Data/" + listFileDataNames[i] + ".json";
+            if (filePath.Contains(FileDataName.PLAYERDATA))
+            {
+                var jsonString = File.ReadAllText(filePath);
+
+                var data = JsonUtility.FromJson<PlayerData>(jsonString);
+
+                data.CurrentLevel = _newPlayerData.CurrentLevel;
+                data.CurrentGold = _newPlayerData.CurrentGold;
+                data.HighScore = _newPlayerData.HighScore;
+                data.IsSoundOn = _newPlayerData.IsSoundOn;
+
+                jsonString = JsonUtility.ToJson(data);
+
+                File.WriteAllText(filePath, jsonString);
+            }
+        }
+    }
+
+    public LevelData GetLevelData(int _level)
+    {
+        var levelData = chapterData.chapter.FirstOrDefault(i => i.level == _level);
+
+        if (_level != null)
+        {
+            return levelData;
+        }
+
+        return null;
+    }
+
     private void loadPlayerData(string _filePath)
     {
-         string jsonData = "";
+        string jsonData = "";
         if (!File.Exists(_filePath))
         {
             PlayerData defaultData = new PlayerData()
