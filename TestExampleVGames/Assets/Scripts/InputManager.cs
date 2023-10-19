@@ -13,11 +13,13 @@ public class InputManager : MonoBehaviour, IActionHandle
     private Action<Vector2> onMouseDown;
     private Action<Vector2> onMouseUp;
     private CoroutineHandle _handle;
+    private Vector2 endPos;
 
     public void Initialize()
     {
         inputControl = new InputControl();
         _handle = new CoroutineHandle();
+        endPos = new Vector2();
 
         inputControl.Mouse.Press.started += pressOnStarted;
         inputControl.Mouse.Press.performed += PressOnperformed;
@@ -32,7 +34,8 @@ public class InputManager : MonoBehaviour, IActionHandle
         {
             Timing.KillCoroutines(_handle);
         }
-        _handle =Timing.RunCoroutine(updatePos(obj));
+
+        _handle = Timing.RunCoroutine(updatePos(obj));
     }
 
     private IEnumerator<float> updatePos(InputAction.CallbackContext _context)
@@ -41,9 +44,17 @@ public class InputManager : MonoBehaviour, IActionHandle
         {
             if (isMouseDown)
             {
-                var _pos = Mouse.current.position.ReadValue();
-                onMouseDown?.Invoke(_pos);
+#if UNITY_ANDROID
+                endPos = inputControl.Mouse.TouchPosition.ReadValue<Vector2>();
+#endif
+
+#if UNITY_EDITOR
+                endPos = Mouse.current.position.ReadValue();
+#endif
+
+                onMouseDown?.Invoke(endPos);
             }
+
             yield return Timing.WaitForOneFrame;
         }
     }
@@ -52,15 +63,22 @@ public class InputManager : MonoBehaviour, IActionHandle
     private void pressOnStarted(InputAction.CallbackContext obj)
     {
         isMouseDown = true;
+#if UNITY_ANDROID
+        endPos = inputControl.Mouse.TouchPosition.ReadValue<Vector2>();
+#endif
+
+#if UNITY_EDITOR
+        endPos = Mouse.current.position.ReadValue();
+#endif
     }
 
     private void pressOnCanceled(InputAction.CallbackContext obj)
     {
         isMouseDown = false;
+
         Timing.KillCoroutines(_handle);
 
-        var _pos = Mouse.current.position.ReadValue();
-        onMouseUp?.Invoke(_pos);
+        onMouseUp?.Invoke(endPos);
     }
 
     public void AssignEvent(Action<Vector2> _onMouseDown, Action<Vector2> _onMouseUp)

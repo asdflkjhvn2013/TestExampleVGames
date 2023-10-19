@@ -4,6 +4,7 @@ using System.Linq;
 using MEC;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Android;
 
 public class GameplayManager : MonoBehaviour
 {
@@ -15,13 +16,14 @@ public class GameplayManager : MonoBehaviour
     private OutlineManager outlineManager;
 
     private RaycastHit hit;
-    [SerializeField] private List<int> chessHasSelected;
+    private List<int> chessHasSelected;
     private bool isHasMatch;
     private int idMatch;
     private int score;
     private int numOfSlot = 8;
-
-    private void Start()
+    private CoroutineHandle checkLoadDataDone;
+    
+    private void Awake()
     {
         chessHasSelected = new List<int>();
 
@@ -29,7 +31,7 @@ public class GameplayManager : MonoBehaviour
         guiManager = GetComponentInChildren<IGUIManager>();
         inputManager = GetComponentInChildren<IActionHandle>();
         outlineManager = GetComponentInChildren<OutlineManager>();
-
+        
         DataManager.INTANCE.LoadData();
         inputManager.Initialize();
 
@@ -37,11 +39,25 @@ public class GameplayManager : MonoBehaviour
         EventHandle.OnNextLevel += onClickPlayGame;
         EventHandle.OnMainMenu += onMainMenu;
 
-
-        spawnerManager.AssignData(DataManager.INTANCE.GetChapterData());
-        guiManager.AssignEvent(onClickPlayGame, DataManager.INTANCE.GetPlayerData());
+       checkLoadDataDone = Timing.RunCoroutine(checkDataLoadDone());
+        
         inputManager.AssignEvent(onMouseDown, onMouseUp);
+        
         Timing.RunCoroutine(updateGameplay());
+    }
+
+    private IEnumerator<float> checkDataLoadDone()
+    {
+        while (true)
+        {
+            if (DataManager.INTANCE.IsLoadDataDone())
+            {
+                spawnerManager.AssignData(DataManager.INTANCE.GetChapterData());
+                guiManager.AssignEvent(onClickPlayGame, DataManager.INTANCE.GetPlayerData());
+                Timing.KillCoroutines(checkLoadDataDone);
+            }
+            yield return Timing.WaitForOneFrame;
+        }
     }
 
     private void onMainMenu()

@@ -1,8 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Linq;
+using TMPro;
+using UnityEngine.Networking;
 using UnityEngine.TextCore;
 
 public class DataManager : MonoBehaviour
@@ -18,6 +21,9 @@ public class DataManager : MonoBehaviour
 
     [SerializeField] private PlayerData playerData;
     [SerializeField] private ChapterData chapterData;
+    private string playerDataPath;
+    private bool isLoadPlayerDone;
+    private bool isLoadChapterDone;
 
     private void Awake()
     {
@@ -36,29 +42,19 @@ public class DataManager : MonoBehaviour
     {
         for (int i = 0; i < listFileDataNames.Count; i++)
         {
-            var filePath = Application.dataPath + "/Data/" + listFileDataNames[i] + ".json";
-            if (filePath.Contains(FileDataName.PLAYERDATA))
+            if (listFileDataNames[i].Contains(FileDataName.PLAYERDATA))
             {
-                loadPlayerData(filePath);
+                loadPlayerData(listFileDataNames[i]);
             }
-            else if (filePath.Contains(FileDataName.LEVELDATA))
+            else if (listFileDataNames[i].Contains(FileDataName.LEVELDATA))
             {
-                loadLevelData(filePath);
+                StartCoroutine(loadLevelData(listFileDataNames[i]));
             }
         }
     }
 
     public PlayerData GetPlayerData()
     {
-        for (int i = 0; i < listFileDataNames.Count; i++)
-        {
-            var filePath = Application.dataPath + "/Data/" + listFileDataNames[i] + ".json";
-            if (filePath.Contains(FileDataName.PLAYERDATA))
-            {
-                loadPlayerData(filePath);
-            }
-        }
-
         return playerData;
     }
 
@@ -69,25 +65,19 @@ public class DataManager : MonoBehaviour
 
     public void SetPlayerData(PlayerData _newPlayerData)
     {
-        for (int i = 0; i < listFileDataNames.Count; i++)
-        {
-            var filePath = Application.dataPath + "/Data/" + listFileDataNames[i] + ".json";
-            if (filePath.Contains(FileDataName.PLAYERDATA))
-            {
-                var jsonString = File.ReadAllText(filePath);
+        var jsonString = File.ReadAllText(playerDataPath);
 
-                var data = JsonUtility.FromJson<PlayerData>(jsonString);
+        var data = JsonUtility.FromJson<PlayerData>(jsonString);
 
-                data.CurrentLevel = _newPlayerData.CurrentLevel;
-                data.CurrentGold = _newPlayerData.CurrentGold;
-                data.HighScore = _newPlayerData.HighScore;
-                data.IsSoundOn = _newPlayerData.IsSoundOn;
+        data.CurrentLevel = _newPlayerData.CurrentLevel;
+        data.CurrentGold = _newPlayerData.CurrentGold;
+        data.HighScore = _newPlayerData.HighScore;
+        data.IsSoundOn = _newPlayerData.IsSoundOn;
 
-                jsonString = JsonUtility.ToJson(data);
+        jsonString = JsonUtility.ToJson(data);
 
-                File.WriteAllText(filePath, jsonString);
-            }
-        }
+        File.WriteAllText(playerDataPath, jsonString);
+        playerData = data;
     }
 
     public LevelData GetLevelData(int _level)
@@ -102,10 +92,12 @@ public class DataManager : MonoBehaviour
         return null;
     }
 
-    private void loadPlayerData(string _filePath)
+    private void loadPlayerData(string _nameFile)
     {
-        string jsonData = "";
-        if (!File.Exists(_filePath))
+        var _filePath = Path.Combine(Application.persistentDataPath, $"{_nameFile}.json");
+        playerDataPath = _filePath;
+        string jsonData = File.Exists(playerDataPath) ? File.ReadAllText(playerDataPath) : "";
+        if (string.IsNullOrEmpty(jsonData))
         {
             PlayerData defaultData = new PlayerData()
             {
@@ -116,20 +108,48 @@ public class DataManager : MonoBehaviour
             };
 
             jsonData = JsonUtility.ToJson(defaultData);
-            File.WriteAllText(_filePath, jsonData);
+            File.WriteAllText(playerDataPath, jsonData);
         }
-
-        jsonData = File.ReadAllText(_filePath);
         playerData = JsonUtility.FromJson<PlayerData>(jsonData);
+        isLoadPlayerDone = true;
     }
 
-    private void loadLevelData(string _filePath)
+    private IEnumerator loadLevelData(string _nameFile)
     {
         chapterData = new ChapterData();
+    
+        var _filePath = Path.Combine(Application.streamingAssetsPath, $"{_nameFile}.json");
 
-        var jsonData = File.ReadAllText(_filePath);
+        UnityWebRequest www;
 
-        chapterData = JsonUtility.FromJson<ChapterData>(jsonData);
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            // Nếu đang chạy trên Android, sử dụng phương thức khác để đọc tệp từ StreamingAssets
+            www = UnityWebRequest.Get("jar:file://" + _filePath);
+        }
+        else
+        {
+            // Đối với Editor và nền tảng khác, sử dụng đường dẫn thường
+            www = UnityWebRequest.Get(_filePath);
+        }
+
+        yield return www.SendWebRequest();
+
+        if (www.isNetworkError || www.isHttpError)
+        {
+            Debug.LogError("Error loading JSON: " + www.error);
+        }
+        else
+        {
+            var jsonData = www.downloadHandler.text;
+            chapterData = JsonUtility.FromJson<ChapterData>(jsonData);
+            isLoadChapterDone = true;
+        }
+    }
+
+    public bool IsLoadDataDone()
+    {
+        return isLoadPlayerDone && isLoadChapterDone;
     }
 }
 

@@ -35,6 +35,15 @@ public partial class @InputControl: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""TouchPosition"",
+                    ""type"": ""PassThrough"",
+                    ""id"": ""751ef479-4263-40fb-9c6c-137591eed47c"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -48,6 +57,28 @@ public partial class @InputControl: IInputActionCollection2, IDisposable
                     ""action"": ""Press"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8f209428-1092-4705-a59e-6cc514b59362"",
+                    ""path"": ""<Touchscreen>/Press"",
+                    ""interactions"": ""Hold"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Press"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4779b657-f981-4a3e-a990-320c80c4c4f1"",
+                    ""path"": ""<Touchscreen>/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""TouchPosition"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -57,6 +88,7 @@ public partial class @InputControl: IInputActionCollection2, IDisposable
         // Mouse
         m_Mouse = asset.FindActionMap("Mouse", throwIfNotFound: true);
         m_Mouse_Press = m_Mouse.FindAction("Press", throwIfNotFound: true);
+        m_Mouse_TouchPosition = m_Mouse.FindAction("TouchPosition", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -119,11 +151,13 @@ public partial class @InputControl: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Mouse;
     private List<IMouseActions> m_MouseActionsCallbackInterfaces = new List<IMouseActions>();
     private readonly InputAction m_Mouse_Press;
+    private readonly InputAction m_Mouse_TouchPosition;
     public struct MouseActions
     {
         private @InputControl m_Wrapper;
         public MouseActions(@InputControl wrapper) { m_Wrapper = wrapper; }
         public InputAction @Press => m_Wrapper.m_Mouse_Press;
+        public InputAction @TouchPosition => m_Wrapper.m_Mouse_TouchPosition;
         public InputActionMap Get() { return m_Wrapper.m_Mouse; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -136,6 +170,9 @@ public partial class @InputControl: IInputActionCollection2, IDisposable
             @Press.started += instance.OnPress;
             @Press.performed += instance.OnPress;
             @Press.canceled += instance.OnPress;
+            @TouchPosition.started += instance.OnTouchPosition;
+            @TouchPosition.performed += instance.OnTouchPosition;
+            @TouchPosition.canceled += instance.OnTouchPosition;
         }
 
         private void UnregisterCallbacks(IMouseActions instance)
@@ -143,6 +180,9 @@ public partial class @InputControl: IInputActionCollection2, IDisposable
             @Press.started -= instance.OnPress;
             @Press.performed -= instance.OnPress;
             @Press.canceled -= instance.OnPress;
+            @TouchPosition.started -= instance.OnTouchPosition;
+            @TouchPosition.performed -= instance.OnTouchPosition;
+            @TouchPosition.canceled -= instance.OnTouchPosition;
         }
 
         public void RemoveCallbacks(IMouseActions instance)
@@ -163,5 +203,6 @@ public partial class @InputControl: IInputActionCollection2, IDisposable
     public interface IMouseActions
     {
         void OnPress(InputAction.CallbackContext context);
+        void OnTouchPosition(InputAction.CallbackContext context);
     }
 }

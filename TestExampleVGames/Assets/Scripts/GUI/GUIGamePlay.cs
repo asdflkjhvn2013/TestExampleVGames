@@ -132,6 +132,10 @@ public class GUIGamePlay : MonoBehaviour, IGuiItem
                 listChessSelected.RemoveAt(i);
                 Destroy(chessSelected.gameObject);
                 countselected--;
+                if (countselected < 0)
+                {
+                    countselected = 0;
+                }
             }
         }
 
